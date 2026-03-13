@@ -1,0 +1,32 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #1a1a1a;
+  color: #e2e8f0;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Страница */
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.page__title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  color: #ffffff;
+}
+
+/* Сетка фильмов */
+.films-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
