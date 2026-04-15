@@ -1,22 +1,23 @@
-
-const router = require('./routes/films.js')
-
 const express = require('express')
 const cors = require('cors')
+const app = express() 
+
 require('./db.js')
 
-const app = express()
-const PORT = 5000
-
-//middleware
-
+// middleware
 app.use(cors({
     origin: 'http://localhost:5173'
 }))
 app.use(express.json())
-app.use('/films', router)
 
-app.listen(PORT , ()=>{
+
+const filmsRouter = require('./routes/films.js')
+const recommendationsRouter = require('./routes/recommendations')
+
+app.use('/films', filmsRouter)
+app.use('/api/recommendations', recommendationsRouter)
+
+const PORT = 5000
+app.listen(PORT, () => {
     console.log(`server is running on port ${PORT}`)
 })
-

@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from "react";
 import "./film.css";
 
-export default function Film({film}) {
-
-  const [selectedFilm, setSelectedFilm] = useState({});
-
-   const handleSetSelectedFilm = (film) => {
-    setSelectedFilm(film);
-  };
+export default function Film({film, onClick}) {
 
   return (
-    <div className="film-card" onClick={() => handleSetSelectedFilm(film)}>
+    <div className="film-card" onClick={() => onClick(film)}>
       <img className="film-card__poster" src={film.Poster_Link} alt={film.Series_Title} />
       <div className="film-card__info">
         <h2 className="film-card__title">{film.Series_Title}</h2>
