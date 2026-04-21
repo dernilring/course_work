@@ -53,20 +53,6 @@ function getSimilarMovies(target, allMovies) {
 }
 
 
-function getDotProduct(vecA, vecB) {
-  let product = 0;
-  for (let i = 0; i < vecA.length; i++) {
-    product += vecA[i] * vecB[i];
-  }
-  return product;
-}
 
-function getMagnitude(vec) {
-  let sum = 0;
-  for (let i = 0; i < vec.length; i++) {
-    sum += vec[i];
-  }
-  return Math.sqrt(sum);
-}
 
 module.exports = { getSimilarMovies };
