@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Film from "./film";
 import "./App.css";
 import { fetchRecommendations } from "./api/recommendations";
+import { getHistory } from "./utils/storage.js";
 
 export default function App() {
   const [selectedFilm, setSelectedFilm] = useState(null);
@@ -11,8 +12,10 @@ export default function App() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const loaderRef = useRef(null);
+  const [history, setHistory] = useState(getHistory());
+  //const history= getHistory()
 
-  const fetchFilms = async (pageNum) => { 
+  const fetchFilms = async (pageNum) => {
     setLoading(true);
     console.log("загружаем страницу:", pageNum);
     console.log("fetchFilms вызван с pageNum:", pageNum);
@@ -34,12 +37,22 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-       console.log("observer:", entries[0].isIntersecting, "loading:", loading, "hasMore:", hasMore);
-      if (entries[0].isIntersecting && hasMore && !loading) {
-        setPage((prev) => prev + 1);
-      }
-    }, { threshold : 0.1});
+    const observer = new IntersectionObserver(
+      (entries) => {
+        console.log(
+          "observer:",
+          entries[0].isIntersecting,
+          "loading:",
+          loading,
+          "hasMore:",
+          hasMore,
+        );
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 0.1 },
+    );
     if (loaderRef.current) observer.observe(loaderRef.current);
     return () => observer.disconnect();
   }, [hasMore, loading]);
@@ -58,28 +71,43 @@ export default function App() {
     );
     setRecommendations(recs);
   };
-  return (
-    <div className="page">
-      <h1 className="page_title">IMDB Top 1000</h1>
-      <div className="films-grid">
-        {selectedFilm && (
-          <div className="recommended">
-            <h2>Похожие на {selectedFilm.Series_Title}</h2>
-            {recommendations.map((film) => (
-              <Film
-                key={`rec-${film.id}`}
-                film={film}
-                onClick={handleFilmClick}
-              />
-            ))}
-          </div>
-        )}
 
-        {films.map((film) => (
-          <Film key={`main-${film.id}`} film={film} onClick={handleFilmClick} />
-        ))}
+  // useEffect(() => {
+  //   console.log("LOCAL STORAGE CHECK:");
+  //   console.log("history:", getHistory());
+  //   console.log("actions:", getActions());
+  // }, []);
+
+  const refreshHistory = () => {
+  setHistory(getHistory());
+};
+
+  const clearHistory = () => {
+    localStorage.removeItem("history");
+  };
+    return (
+      <div className="page">
+        <h1 className="page_title">IMDB Top 1000</h1>
+        <div className="films-grid">
+          {selectedFilm && (
+            <div className="recommended">
+              <h2>Похожие на {selectedFilm.Series_Title}</h2>
+              {recommendations.map((film) => (
+                <Film
+                  key={`rec-${film.id}`}
+                  film={film}
+                  onClick={handleFilmClick}
+                  onHistoryChange={ refreshHistory}
+                />
+              ))}
+            </div>
+          )}
+
+          {films.map((film) => (
+            <Film key={`main-${film.id}`} film={film} onClick={handleFilmClick} />
+          ))}
+        </div>
+        {hasMore && <div ref={loaderRef} style={{ height: "20px" }} />}
       </div>
-      {hasMore && <div ref={loaderRef} style={{ height: "20px" }} />}
-    </div>
-  );
+    );
 }

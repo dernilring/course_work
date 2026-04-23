@@ -1,11 +1,13 @@
-
 /* Карточка фильма */
 .film-card {
   background-color: #2a2a2a;
   border-radius: 12px;
-  overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
 }
 
 .film-card:hover {
@@ -13,15 +15,18 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
+/* Постер — небольшой */
 .film-card__poster {
-  width: 100%;
-  height: 200px;
+  width: 80px;           /* маленький постер */
+  height: 120px;
   object-fit: cover;
-  display: block;
+  border-radius: 6px;
+  align-self: center;
 }
 
 .film-card__info {
-  padding: 12px;
+  padding: 0 8px 8px;
+  flex: 1;
 }
 
 .film-card__title {
@@ -46,9 +51,30 @@
   margin-bottom: 8px;
 }
 
-
 .film-card__meta {
   font-size: 10px;
   color: #64748b;
   margin-bottom: 2px;
+}
+
+/* Кнопки внизу */
+.film-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.film-buttons button {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #333;
+  color: #e0e0e0;
+  cursor: pointer;
+}
+
+.film-buttons button:hover {
+  background-color: #444;
 }
