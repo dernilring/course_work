@@ -1,7 +1,11 @@
-const express = require("express")
-const router = express.Router()
-const {getRecommendations} = require("../controllers/recommendationsController")
+const router = require('express').Router()
+const { getRecommendations, seedEmbeddings } = require('../controllers/recommendationsController')
 
-router.get('/:id', getRecommendations);
+// GET /api/recommendations/:id — get similar movies for a given TMDB movie id
+router.get('/:id', getRecommendations)
 
-module.exports = router;
+// POST /api/recommendations/seed — pre-compute embeddings for top movies
+// Call once: curl -X POST http://localhost:5000/api/recommendations/seed -H "Content-Type: application/json" -d '{"pages":5}'
+router.post('/seed', seedEmbeddings)
+
+module.exports = router

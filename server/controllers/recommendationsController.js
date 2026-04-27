@@ -1,61 +1,74 @@
-const { poolPromise, sql } = require("../db");
-const { getSimilarMovies } = require("../services/similarity");
+const { getSemanticRecommendations } = require('../services/similarity')
+const { getEmbedding, saveEmbedding, hasEmbedding } = require('../db/sqlite')
+const { getMovieById, getMovieTextForEmbedding } = require('../services/omdb')
+const { embed } = require('../services/embeddings')
 
+/**
+ * Ensure a movie has an embedding in SQLite.
+ * If not — fetch from TMDB, embed, and save.
+ */
+async function ensureEmbedding(tmdbId) {
+  if (hasEmbedding(tmdbId)) return
+
+  const movie = await getMovieById(tmdbId)
+  const text = await getMovieTextForEmbedding(tmdbId, movie.Overview)
+  const vector = await embed(text)
+  saveEmbedding(movie, vector)
+}
+
+// GET /api/recommendations/:id
 async function getRecommendations(req, res) {
   try {
-    const { id } = req.params;
-    console.log("ID:", id);
+   const tmdbId = req.params.id
+if (!tmdbId) return res.status(400).json({ error: 'Invalid movie id' })
 
-    const pool = await poolPromise;
+    // Make sure the target movie has an embedding
+    await ensureEmbedding(tmdbId)
 
-    const targetResult = await pool
-      .request()
-      .input("id", sql.Int, id)
-      .query("SELECT * FROM imdb_movies WHERE id = @id");
+    // If we have fewer than 50 embeddings in DB, we can't give good recommendations.
+    // The /api/recommendations/seed endpoint should be called first.
+    const recommendations = await getSemanticRecommendations(tmdbId, 10)
 
-    const allResult = await pool.request().query("SELECT * FROM imdb_movies");
-
-    const targetRow = targetResult.recordset[0];
-    console.log("колонки:", Object.keys(targetRow));
-
-    const allMovies = allResult.recordset.map((m) => ({
-      ...m,
-      genres: m.Genre.split(",").map((g) => g.trim()),
-      Meta_score: m.Meta_score ? Number(m.Meta_score) : 0,
-      IMDB_Rating: Number(m.IMDB_Rating),
-      Released_Year: Number(m.Released_Year),
-    }));
-
-    const target = {
-      ...targetRow,
-      genres: targetRow.Genre.split(",").map((g) => g.trim()),
-        Meta_score: targetRow.Meta_score ? Number(targetRow.Meta_score) : 0,
-      IMDB_Rating: Number(targetRow.IMDB_Rating),
-      Released_Year: Number(targetRow.Released_Year),
-    };
-
-    const result = getSimilarMovies(target, allMovies);
-    console.log(
-      "target:",
-      target.Series_Title,
-      target.genres,
-      target.Meta_score,
-      target.IMDB_Rating,
-      target.Released_Year,
-    );
-    console.log(
-      "top 3:",
-      result.slice(0, 3).map((m) => ({
-        title: m.Series_Title,
-        score: m.totalScore,
-        genres: m.genres,
-      })),
-    );
-    res.json(result.slice(0, 10));
+    res.json(recommendations)
   } catch (err) {
-    console.error("ОШИБКА:", err);
-    res.status(500).json({ error: err.message });
+    console.error('Recommendations error:', err)
+    res.status(500).json({ error: err.message })
   }
 }
 
-module.exports = { getRecommendations };
+/**
+ * POST /api/recommendations/seed
+ * Pre-computes embeddings for top N movies from TMDB.
+ * Call this once after server start (or via a script).
+ */
+async function seedEmbeddings(req, res) {
+  try {
+    const { getTopMovies } = require('../services/omdb')
+    const pages = req.body.pages || 3 // 3 pages = ~60 movies
+    let seeded = 0
+
+    for (let page = 1; page <= pages; page++) {
+      const movies = await getTopMovies(page)
+      for (const movie of movies) {
+        if (!hasEmbedding(movie.id)) {
+          try {
+            const text = await getMovieTextForEmbedding(movie.id, movie.Overview)
+            const vector = await embed(text)
+            saveEmbedding(movie, vector)
+            seeded++
+            console.log(`Embedded [${seeded}]: ${movie.Series_Title}`)
+          } catch (e) {
+            console.warn(`Skipped ${movie.Series_Title}:`, e.message)
+          }
+        }
+      }
+    }
+
+    res.json({ seeded, message: `Successfully embedded ${seeded} movies` })
+  } catch (err) {
+    console.error('Seed error:', err)
+    res.status(500).json({ error: err.message })
+  }
+}
+
+module.exports = { getRecommendations, seedEmbeddings, ensureEmbedding }

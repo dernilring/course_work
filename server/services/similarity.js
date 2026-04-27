@@ -1,58 +1,91 @@
-function jaccardSimilarity(setA, setB) {
-  const A = new Set(setA);
-  const B = new Set(setB);
+const { cosineSimilarity, averageVectors, subtractVectors } = require('./embeddings')
+const { getEmbedding, getAllEmbeddings, getActionsByType } = require('../db/sqlite')
 
-  const intersection = new Set([...A].filter((a) => B.has(a)));
-  const union = new Set([...A, ...B]);
-  if (union.size === 0) return 0;
+/**
+ * Find movies similar to a target movie using semantic embeddings.
+ * Optionally blends in the user's taste profile (from liked/disliked movies).
+ *
+ * @param {number} targetTmdbId - TMDB id of the movie to find recommendations for
+ * @param {number} topN - how many results to return
+ * @returns {Array} sorted list of similar movies with scores
+ */
+async function getSemanticRecommendations(targetTmdbId, topN = 10) {
+  // 1. Get target embedding
+  const target = getEmbedding(targetTmdbId)
+  if (!target) throw new Error(`No embedding found for movie ${targetTmdbId}`)
 
-  return intersection.size / union.size;
-}
+  // 2. Build user taste profile from liked/disliked movies
+  const likedIds = getActionsByType('like').map(a => a.tmdb_id)
+  const dislikedIds = getActionsByType('dislike').map(a => a.tmdb_id)
 
-function normalize(value, min, max) {
-  if (min === max) return 0;
-  return (value - min) / (max - min);
-}
+  const likedEmbeddings = likedIds
+    .map(id => getEmbedding(id))
+    .filter(Boolean)
+    .map(e => e.embedding)
 
+  const dislikedEmbeddings = dislikedIds
+    .map(id => getEmbedding(id))
+    .filter(Boolean)
+    .map(e => e.embedding)
 
-function getSimilarMovies(target, allMovies) {
-  // фильтруем только валидные числа
-  const validMovies = allMovies.filter(m => 
-    !isNaN(m.Meta_score) && 
-    !isNaN(m.IMDB_Rating) && 
-    !isNaN(m.Released_Year) &&
-    m.Released_Year > 0
-  );
+  // 3. Build query vector = blend of target + user profile
+  let queryVector = [...target.embedding]
 
-  let scores = validMovies.map((m) => m.Meta_score);
-  let ratings = validMovies.map((m) => m.IMDB_Rating);
-  let releasedYears = validMovies.map((m) => m.Released_Year);
+  if (likedEmbeddings.length > 0) {
+    const profileVector = averageVectors(likedEmbeddings)
+    // 70% current movie, 30% user taste profile
+    queryVector = queryVector.map((x, i) => x * 0.7 + profileVector[i] * 0.3)
+  }
 
-  let minScore = Math.min(...scores);
-  let minRatings = Math.min(...ratings);
-  let minReleasedYears = Math.min(...releasedYears);
-  let maxScore = Math.max(...scores);
-  let maxRatings = Math.max(...ratings);
-  let maxReleasedYears = Math.max(...releasedYears);
+  // Subtract disliked content from query
+  if (dislikedEmbeddings.length > 0) {
+    queryVector = subtractVectors(queryVector, dislikedEmbeddings, 0.2)
+  }
 
-  return allMovies
-    .filter((movie) => movie.id !== target.id)
-    .map((movie) => {
-      const genreScore = jaccardSimilarity(target.genres, movie.genres);
-      const score = isNaN(movie.Meta_score) ? 0 : 
-        1 - Math.abs(normalize(target.Meta_score, minScore, maxScore) - normalize(movie.Meta_score, minScore, maxScore));
-      const rating = isNaN(movie.IMDB_Rating) ? 0 :
-        1 - Math.abs(normalize(target.IMDB_Rating, minRatings, maxRatings) - normalize(movie.IMDB_Rating, minRatings, maxRatings));
-      const releasedYear = isNaN(movie.Released_Year) || movie.Released_Year === 0 ? 0 :
-        1 - Math.abs(normalize(target.Released_Year, minReleasedYears, maxReleasedYears) - normalize(movie.Released_Year, minReleasedYears, maxReleasedYears));
-      
-      const totalScore = genreScore * 0.5 + score * 0.3 + rating * 0.3 + releasedYear * 0.2;
-      return { ...movie, totalScore };
+  // 4. Score all movies in DB
+  const all = getAllEmbeddings()
+
+  const results = all
+    .filter(m => m.tmdb_id !== targetTmdbId)
+    .filter(m => !dislikedIds.includes(m.tmdb_id)) // don't recommend disliked movies
+    .map(m => {
+      const semanticScore = cosineSimilarity(queryVector, m.embedding)
+
+      // Small bonus for genre overlap (keep some genre logic as a tiebreaker)
+      const targetGenres = new Set((target.genre || '').split(',').map(g => g.trim()))
+      const movieGenres = new Set((m.genre || '').split(',').map(g => g.trim()))
+      const intersection = [...targetGenres].filter(g => movieGenres.has(g)).length
+      const union = new Set([...targetGenres, ...movieGenres]).size
+      const genreBonus = union > 0 ? (intersection / union) * 0.1 : 0
+
+      const totalScore = semanticScore + genreBonus
+
+      return {
+        id: m.tmdb_id,
+        Series_Title: m.title,
+        Overview: m.overview,
+        Genre: m.genre,
+        IMDB_Rating: m.rating,
+        Released_Year: m.year,
+        Poster_Link: m.poster,
+        totalScore,
+        semanticScore: +semanticScore.toFixed(4),
+        // Why this was recommended (shown in UI)
+        reason: buildReason(target, m, semanticScore, likedEmbeddings.length)
+      }
     })
-    .sort((a, b) => b.totalScore - a.totalScore);
+    .sort((a, b) => b.totalScore - a.totalScore)
+    .slice(0, topN)
+
+  return results
 }
 
+// Build a short human-readable reason string for the UI "why this film?" feature
+function buildReason(target, candidate, score, likedCount) {
+  if (score > 0.85) return `Very similar theme and tone to ${target.title}`
+  if (score > 0.75) return `Similar story and mood`
+  if (likedCount > 0 && score > 0.65) return `Matches your taste based on liked films`
+  return `Thematically related`
+}
 
-
-
-module.exports = { getSimilarMovies };
+module.exports = { getSemanticRecommendations }
