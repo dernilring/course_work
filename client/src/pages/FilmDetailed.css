@@ -1,0 +1,126 @@
+.filmpage {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px 40px 20px;
+  color: #f0f0f0;
+}
+
+.filmpage__back {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 20px 0 16px 0;
+  transition: color 0.2s ease;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.filmpage__back:hover {
+  color: #ffffff;
+}
+
+.filmpage__hero {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 40px;
+  margin-bottom: 48px;
+}
+
+.filmpage__poster {
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.filmpage__title {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.filmpage__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 12px;
+  color: #aaa;
+  font-size: 15px;
+}
+
+.filmpage__rating {
+  color: #ffd700;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.filmpage__genre {
+  color: #888;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.filmpage__overview {
+  line-height: 1.7;
+  color: #ccc;
+  margin-bottom: 20px;
+}
+
+.filmpage__director,
+.filmpage__actors,
+.filmpage__votes {
+  color: #aaa;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.filmpage__trailer {
+  margin-top: 16px;
+}
+
+.filmpage__trailer h2 {
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+
+.filmpage__trailer iframe {
+  border-radius: 12px;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+}
+
+.filmpage__no-trailer {
+  color: #666;
+}
+
+.filmpage__loading {
+  text-align: center;
+  padding: 100px;
+  color: #888;
+  font-size: 18px;
+}
+
+@media (max-width: 768px) {
+  .filmpage__hero {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .filmpage__poster {
+    max-width: 250px;
+    margin: 0 auto;
+  }
+  
+  .filmpage__title {
+    font-size: 24px;
+  }
+  
+  .filmpage__meta {
+    gap: 12px;
+    font-size: 13px;
+  }
+}

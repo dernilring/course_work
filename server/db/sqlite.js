@@ -86,7 +86,6 @@ function getActionsByType(action) {
 }
 
 function getActionMap() {
-  // Returns { tmdbId: Set<action> } for quick lookup
   const actions = getActions()
   const map = {}
   for (const a of actions) {

@@ -17,7 +17,7 @@ const { embed } = require('../services/embeddings')
 const { saveEmbedding, hasEmbedding } = require('../db/sqlite')
 
 async function seed() {
-  const pages = parseInt(process.argv[2]) || 5 // default 5 pages = ~100 movies
+  const pages = parseInt(process.argv[2]) || 5 
   console.log(`Seeding embeddings for ${pages} pages of top movies...`)
   let total = 0
 

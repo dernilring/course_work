@@ -24,25 +24,29 @@ body {
   color: #ffffff;
 }
 
-/* Сетка фильмов */
+/* Сетка фильмов (основная — 4 колонки) */
 .films-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
 }
 
-.films-grid > .recommended{
- grid-column: 1 / -1;
+/* Блок с рекомендациями */
+.films-grid > .recommended {
+  grid-column: 1 / -1;
   border-top: 3px solid #3a3a3a;
   padding-top: 24px;
   margin-top: 8px;
-
   border-bottom: 3px solid #3a3a3a;
   padding-bottom: 24px;
+  
+  /* Внутри блока — 5 колонок */
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
 }
+
+/* Заголовок рекомендаций */
 .films-grid > .recommended h2 {
   grid-column: 1 / -1;
   font-size: 20px;

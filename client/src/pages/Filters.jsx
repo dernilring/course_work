@@ -72,7 +72,7 @@ export default function Filters({ filters, onChange }) {
           placeholder="Search for :"
           value={searchInput}
           onChange={handleSearchChange}
-          className="filters_searchInput"
+         className="filters_search-input"
         />
       </div>
 

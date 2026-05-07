@@ -4,7 +4,6 @@
 let pipeline = null
 let embedder = null
 
-// Lazy-load the model once
 async function getEmbedder() {
   if (embedder) return embedder
   if (!pipeline) {
@@ -21,18 +20,18 @@ async function getEmbedder() {
 async function embed(text) {
   const model = await getEmbedder()
   const output = await model(text, { pooling: 'mean', normalize: true })
-  return Array.from(output.data) // plain JS array of 384 floats
+  return Array.from(output.data) 
 }
 
-// Cosine similarity between two vectors (both must be normalized — MiniLM outputs are)
+
 function cosineSimilarity(a, b) {
   if (a.length !== b.length) return 0
   let dot = 0
   for (let i = 0; i < a.length; i++) dot += a[i] * b[i]
-  return dot // vectors are already normalized, so dot product = cosine similarity
+  return dot 
 }
 
-// Average multiple vectors into one (for user profile)
+
 function averageVectors(vectors) {
   if (!vectors.length) return null
   const dim = vectors[0].length
@@ -40,12 +39,12 @@ function averageVectors(vectors) {
   for (const v of vectors) {
     for (let i = 0; i < dim; i++) avg[i] += v[i]
   }
-  // Normalize
+
   const norm = Math.sqrt(avg.reduce((s, x) => s + x * x, 0))
   return avg.map(x => x / (norm || 1))
 }
 
-// Subtract disliked vectors from a profile vector (push away from disliked content)
+
 function subtractVectors(profile, dislikedVectors, weight = 0.3) {
   if (!dislikedVectors.length) return profile
   const avg = averageVectors(dislikedVectors)

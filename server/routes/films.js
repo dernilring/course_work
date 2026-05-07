@@ -10,19 +10,27 @@ const { ensureEmbedding } = require("../controllers/recommendationsController");
 // GET /films?page=1&limit=20
 router.get("/", async (req, res) => {
   try {
-    const page = req.query.page || 1;
-    // omdb returns 20 per page — matches your current limit
-    const omdbPage = Math.ceil(page);
-    const movies = await getTopMovies(omdbPage);
+    const page = parseInt(req.query.page) || 1;
+    const sort = req.query.sort || "default";
+    const TOTAL_IDS = 100;
+    const PER_PAGE = 20;
+    const TOTAL_PAGES = TOTAL_IDS / PER_PAGE; // = 5
 
-    // Attach user actions so frontend can show like/watchlist state
+    let movies;
+    if (sort === "rating_asc") {
+      const reversedPage = TOTAL_PAGES - page + 1;
+      movies = reversedPage < 1 ? [] : await getTopMovies(reversedPage, true);
+    } else {
+      movies = await getTopMovies(page);
+    }
+
     const actionMap = getActionMap();
     const result = movies.map((m) => ({
       ...m,
       userActions: [...(actionMap[m.id] || [])],
     }));
 
-    res.json(result);
+    res.json({ movies: result, hasMore: page < TOTAL_PAGES });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -51,13 +59,33 @@ router.get("/actions/all", async (req, res) => {
   }
 });
 
+router.get("/:id/trailer", async (req, res) => {
+  try {
+    const movie = await getMovieById(req.params.id);
+    const query = encodeURIComponent(
+      `${movie.Series_Title} ${movie.Released_Year} official trailer`,
+    );
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&maxResults=1&key=${process.env.YOUTUBE_API_KEY}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!data.items || data.items.length === 0) {
+      return res.json({ videoId: null });
+    }
+
+    res.json({ videoId: data.items[0].id.videoId });
+  } catch {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /films/:id — single movie detail
 router.get("/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const movie = await getMovieById(id);
 
-    // Pre-compute embedding in background (don't block response)
     ensureEmbedding(id).catch(console.warn);
 
     const actionMap = getActionMap();
@@ -82,13 +110,10 @@ router.post("/:id/action", async (req, res) => {
 
     console.log("saving...", omdbId, action, active);
     if (active) {
-      // If liking, remove dislike (and vice versa — can't do both)
       if (action === "like") removeAction(omdbId, "dislike");
       if (action === "dislike") removeAction(omdbId, "like");
       saveAction(omdbId, action);
       console.log("saved!");
-      // When user likes/dislikes, make sure we have an embedding for this movie
-      // (needed for user profile calculations)
       ensureEmbedding(omdbId).catch(console.warn);
     } else {
       removeAction(omdbId, action);
@@ -100,5 +125,6 @@ router.post("/:id/action", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 module.exports = router;

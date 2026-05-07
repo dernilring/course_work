@@ -1,0 +1,76 @@
+/* Общий контейнер для всех страниц */
+.page-container {
+  max-width: 1200px; /* как у Home */
+  margin: 0 auto;
+  padding: 0 20px 40px 20px; /* такие же отступы, как у Home */
+}
+
+/* Хедер с кнопкой назад, заголовком и кнопкой очистки */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-top: 20px;
+}
+
+/* Левая группа (кнопка назад + заголовок) */
+.page-left-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Кнопка назад */
+.page-back-button {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: color 0.2s ease;
+  font-weight: 500;
+}
+
+.page-back-button:hover {
+  color: #ffffff;
+}
+
+/* Заголовок страницы */
+.page-title {
+  margin: 0;
+  color: #f0f0f0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* Кнопка "Очистить всё" */
+.page-clear-button {
+  background-color: #e53e3e;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.page-clear-button:hover {
+  background-color: #c53030;
+}
+
+/* Сообщение, когда список пуст */
+.page-empty-message {
+  text-align: center;
+  color: #888;
+  margin-top: 40px;
+}
+
+/* Сетка фильмов (5 колонок) */
+.page-films-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+}

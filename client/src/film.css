@@ -17,7 +17,7 @@
 
 /* Постер — небольшой */
 .film-card__poster {
-  width: 80px;           /* маленький постер */
+  width: 80px;
   height: 120px;
   object-fit: cover;
   border-radius: 6px;
@@ -57,7 +57,7 @@
   margin-bottom: 2px;
 }
 
-/* Кнопки внизу */
+/* Кнопки внизу — новый стиль как у фильтров */
 .film-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -66,15 +66,198 @@
 }
 
 .film-buttons button {
-  padding: 4px 8px;
-  font-size: 12px;
+  padding: 6px 10px;
+  font-size: 11px;
+  border-radius: 20px;
   border: 1px solid #444;
-  border-radius: 4px;
-  background-color: #333;
-  color: #e0e0e0;
+  background: transparent;
+  color: #ccc;
   cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
 }
 
 .film-buttons button:hover {
-  background-color: #444;
+  border-color: #888;
+  color: #fff;
+  background: transparent;
+}
+
+/* Активная кнопка (например, лайкнуто) */
+.film-buttons button.active {
+  background: #e50914;
+  border-color: #e50914;
+  color: #fff;
+}
+
+.film-card {
+  position: relative;
+}
+
+.film-card__why {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 200, 0, 0.85);
+  color: #000;
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  z-index: 10;
+}
+
+.film-card__why::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 28px;
+  right: 0;
+  background: rgba(0, 0, 0, 0.88);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  width: 220px;
+  line-height: 1.5;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  white-space: normal;
+}
+
+.film-card__why:hover::after {
+  opacity: 1;
+}
+
+/* Активное состояние для кнопок */
+/* Базовые стили для кнопок */
+.film-buttons button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.film-buttons button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Активное состояние для всех кнопок действий */
+.film-buttons button.active,
+.film-buttons button.watched,
+.film-buttons button.liked,
+.film-buttons button.disliked {
+  background-color: #e50914;
+  border-color: #e50914;
+  color: white;
+  box-shadow: 0 0 12px rgba(229, 9, 20, 0.4);
+}
+
+/* Специфичные цвета для разных типов (опционально) */
+.film-buttons button.liked {
+  background-color: #e50914;
+  border-color: #e50914;
+}
+
+.film-buttons button.disliked {
+  background-color: #e50914;
+  border-color: #e50914;
+  opacity: 0.9;
+}
+
+.film-buttons button.watched {
+  background-color: #e50914;
+  border-color: #e50914;
+}
+
+/* Эффект нажатия */
+.film-buttons button:active {
+  transform: scale(0.96);
+  transition: transform 0.05s ease;
+}
+
+/* Эффект пульсации при клике */
+.film-buttons button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 80%);
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.film-buttons button:active::after {
+  animation: ripple 0.4s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+/* Стиль для кнопки трейлера (без активного состояния) */
+.film-buttons button:last-child {
+  background: rgba(229, 9, 20, 0.2);
+  border-color: #e50914;
+  color: #e50914;
+}
+
+.film-buttons button:last-child:hover {
+  background: rgba(229, 9, 20, 0.3);
+  color: #fff;
+  border-color: #e50914;
+}
+
+/* Responsive для мобильных устройств */
+@media (max-width: 768px) {
+  .film-buttons button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+/* Анимация появления активного состояния */
+@keyframes activePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(229, 9, 20, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(229, 9, 20, 0);
+  }
+}
+
+.film-buttons button.active,
+.film-buttons button.watched,
+.film-buttons button.liked,
+.film-buttons button.disliked {
+  animation: activePulse 0.4s ease-out;
 }

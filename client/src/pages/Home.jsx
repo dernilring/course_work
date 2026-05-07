@@ -1,47 +1,50 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Film from "../Film.jsx";
 import "./Home.css";
 import { fetchRecommendations } from "../api/recommendations.js";
 import { getHistory } from "../utils/storage.js";
 import { useFilms } from "../context/FilmContext.jsx";
-import { useMemo } from "react";
 import Filters from "./Filters.jsx";
 
 export default function Home() {
   const [selectedFilm, setSelectedFilm] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
-  const { films, addFilms } = useFilms();
+  const { films, addFilms, resetFilms } = useFilms(); 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const loaderRef = useRef(null);
   const [history, setHistory] = useState(getHistory());
   const topRef = useRef(null);
-  
+
   const [filters, setFilters] = useState({
-    genre: '',
+    genre: "",
     minRating: 0,
-    sort: 'default',
-    search: ''  
+    sort: "default",
+    search: "",
   });
 
-  const fetchFilms = async (pageNum) => {
-    setLoading(true);
-    console.log("загружаем страницу:", pageNum);
-    console.log("fetchFilms вызван с pageNum:", pageNum);
 
-    const url = `/films?page=${pageNum}&limit=20`;
-    console.log("URL запроса:", url);
+  const sortRef = useRef(filters.sort);
 
-    const res = await fetch(url);
-    const data = await res.json();
+const fetchFilms = async (pageNum, sort) => {
+  const currentSort = sort ?? sortRef.current;
+  setLoading(true);
+  const url = `/films?page=${pageNum}&limit=20&sort=${currentSort}`;
+  const res = await fetch(url);
+  const data = await res.json();
 
-    if (data.length < 20) setHasMore(false);
-
-    addFilms(data);
-    setLoading(false);
-  };
   
+  const movies = Array.isArray(data) ? data : (data.movies || []);
+  const hasMoreFromServer = Array.isArray(data) ? movies.length >= 20 : data.hasMore;
+
+  console.log("Загружено фильмов:", movies.length);
+
+  if (!hasMoreFromServer) setHasMore(false);
+  addFilms(movies);
+  setLoading(false);
+};
+
   useEffect(() => {
     fetchFilms(1);
   }, []);
@@ -49,14 +52,6 @@ export default function Home() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        console.log(
-          "observer:",
-          entries[0].isIntersecting,
-          "loading:",
-          loading,
-          "hasMore:",
-          hasMore,
-        );
         if (entries[0].isIntersecting && hasMore && !loading) {
           setPage((prev) => prev + 1);
         }
@@ -71,43 +66,44 @@ export default function Home() {
     if (page > 1) fetchFilms(page);
   }, [page]);
 
+  const handleFiltersChange = (newFilters) => {
+    const sortChanged = newFilters.sort !== filters.sort;
+    setFilters(newFilters);
+    sortRef.current = newFilters.sort; 
+
+   
+    if (sortChanged) {
+      resetFilms();
+      setPage(1);
+      setHasMore(true);
+      fetchFilms(1, newFilters.sort);
+    }
+  };
+
   const handleFilmClick = async (film) => {
-    console.log("клик на фильм:", film.Series_Title, "id:", film.id);
     setSelectedFilm(film);
     setRecommendations([]);
     topRef.current?.scrollIntoView({ behavior: "smooth" });
     const recs = await fetchRecommendations(film.id);
-    console.log(
-      "новые рекомендации:",
-      recs.map((r) => r.Series_Title),
-    );
+    console.log("recs:", recs);
     setRecommendations(recs);
   };
 
-  const refreshHistory = () => {
-    setHistory(getHistory());
-  };
-
-  const clearHistory = () => {
-    localStorage.removeItem("history");
-  };
+  const refreshHistory = () => setHistory(getHistory());
 
   const filteredFilms = useMemo(() => {
     let result = [...films];
 
-    if (filters.search && filters.search.trim()) {
+    if (filters.search?.trim()) {
       const searchTerm = filters.search.toLowerCase().trim();
-      result = result.filter(film => 
-        film.Series_Title && 
-        film.Series_Title.toLowerCase().includes(searchTerm)
+      result = result.filter((film) =>
+        film.Series_Title?.toLowerCase().includes(searchTerm),
       );
     }
 
     if (filters.genre) {
-      result = result.filter(
-        (f) =>
-          f.Genre &&
-          f.Genre.toLowerCase().includes(filters.genre.toLowerCase()),
+      result = result.filter((f) =>
+        f.Genre?.toLowerCase().includes(filters.genre.toLowerCase()),
       );
     }
 
@@ -141,38 +137,39 @@ export default function Home() {
   return (
     <div className="page">
       <div ref={topRef} />
-      <h1 className="page_title">IMDB Top 1000</h1>
-      
-      {/* Передаем filters и onChange */}
-      <Filters filters={filters} onChange={setFilters} />
-      
+      <h1 className="page_title">FilmMatch</h1>
+
+      <Filters filters={filters} onChange={handleFiltersChange} />
+
       <div className="films-grid">
         {selectedFilm && (
           <div className="recommended">
-            <h2>Похожие на {selectedFilm.Series_Title}</h2>
+            <h2>Similar to {selectedFilm.Series_Title}</h2>
             {recommendations.map((film) => (
               <Film
                 key={`rec-${film.id}`}
                 film={film}
                 onClick={handleFilmClick}
                 onHistoryChange={refreshHistory}
+                reason={film.reason}
               />
             ))}
           </div>
         )}
-        
+
         {filteredFilms.length === 0 && !loading && (
-          <p className="no-results">Нет фильмов по выбранным фильтрам</p>
+          <p className="no-results">Film is not found</p>
         )}
-        
-       
+
         {filteredFilms.map((film) => (
           <Film key={`main-${film.id}`} film={film} onClick={handleFilmClick} />
         ))}
       </div>
-      
+
       {hasMore && <div ref={loaderRef} style={{ height: "20px" }} />}
-      {loading && <p style={{ textAlign: 'center', color: '#888' }}>Загрузка...</p>}
+      {loading && (
+        <p style={{ textAlign: "center", color: "#888" }}>Loading...</p>
+      )}
     </div>
   );
 }

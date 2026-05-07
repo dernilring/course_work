@@ -1,8 +1,10 @@
 .filters {
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
+  padding: 16px 20px;
   background: #1a1a1a;
   border-radius: 12px;
   margin-bottom: 24px;
@@ -80,4 +82,26 @@
 .filters__reset:hover {
   background: #e50914;
   color: #fff;
+}
+.filters_search-input {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.filters_search-input:focus {
+  border-color: #e50914;
+  background-color: #333;
+  box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.2);
+}
+
+.filters_search-input::placeholder {
+  color: #777;
+  font-size: 13px;
 }

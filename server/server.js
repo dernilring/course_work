@@ -4,7 +4,6 @@ const cors = require('cors')
 const fs = require('fs')
 const path = require('path')
 
-// Make sure data/ directory exists (for SQLite file)
 const dataDir = path.join(__dirname, 'data')
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir)
 
@@ -19,7 +18,7 @@ const recommendationsRouter = require('./routes/recommendations')
 app.use('/films', filmsRouter)
 app.use('/api/recommendations', recommendationsRouter)
 
-// Health check
+
 app.get('/health', (req, res) => res.json({ status: 'ok' }))
 
 const PORT = process.env.PORT || 5000

@@ -8,12 +8,12 @@ export default function Layout() {
   }
   return (
     <>
-      <header style={{ display: 'flex', gap: '10px' }}>
-        <NavLink to="/" className={handleActive}>
-          Home
-        </NavLink>
+      <header>
         <NavLink to="/liked" className={handleActive}>
           Liked
+        </NavLink>
+         <NavLink to="/disliked" className={handleActive}>
+          Disliked
         </NavLink>
         <NavLink to="/watchedLater" className={handleActive}>
           Watch Later

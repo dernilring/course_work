@@ -1,3 +1,33 @@
-.active {
-  color: red;
+/* Убираем старый header */
+header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 20px 0 20px;
+  display: flex;
+  gap: 24px;
+  background-color: transparent;
+  border-bottom: 1px solid #333;
+}
+
+/* Базовый стиль NavLink — просто белый текст */
+header a {
+  text-decoration: none;
+  color: #a0a0a0;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 8px 0;
+  transition: color 0.2s ease;
+  background-color: transparent;
+  border: none;
+}
+
+/* Ховер — чуть ярче */
+header a:hover {
+  color: #ffffff;
+}
+
+/* Активный NavLink — белый и жирный */
+header a.active {
+  color: #ffffff;
+  font-weight: 600;
 }
