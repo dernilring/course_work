@@ -8,41 +8,35 @@ import {
 } from "./utils/storage.js";
 import { useNavigate } from "react-router-dom";
 
-export default function Film({ film, onClick, onHistoryChange, reason }) {
-  const [actions, setActions] = useState(getActions());
+export default function Film({
+  film,
+  onClick,
+  onHistoryChange,
+  actions,
+  onAction,
+  reason,
+}) {
   const currentAction = actions[film.id] || {};
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const updateAction = async (action) => {
     const allActions = getActions();
     const prev = allActions[film.id] || {};
-    const updated = {
-      ...prev,
-      [action]: !prev[action],
-    };
-    if (action === "liked") updated.disliked = false;
-    if (action === "disliked") updated.liked = false;
-    if (action === "watched") updated.planned = false;
-    if (action === "planned") updated.watched = false;
-
-    allActions[film.id] = updated;
-    saveActions({ ...allActions });
-    setActions({ ...allActions });
-
+    const isActive = !prev[action];
+    onAction(film.id, action);
     const actionMap = {
       liked: "like",
       disliked: "dislike",
       watched: "watched",
       planned: "watchlist",
     };
-
     try {
       await fetch(`http://localhost:5000/films/${film.id}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: actionMap[action],
-          active: updated[action],
+          active: isActive,
         }),
       });
     } catch (e) {
@@ -64,6 +58,26 @@ export default function Film({ film, onClick, onHistoryChange, reason }) {
     updateHistory();
     console.log("после updateHistory:", localStorage.getItem("history"));
     onClick(film);
+  };
+  const convertRating = (film) => {
+    const map = {
+      G: "0+",
+      PG: "6+",
+      "PG-13": "13+",
+      R: "17+",
+      "NC-17": "18+",
+      "TV-Y": "0+",
+      "TV-Y7": "7+",
+      "TV-G": "0+",
+      "TV-PG": "6+",
+      "TV-14": "14+",
+      "TV-MA": "18+",
+      "Not Rated": null,
+      Unrated: null,
+      Approved: null,
+      Passed: null,
+    };
+    return map[film] || null;
   };
 
   return (
@@ -87,6 +101,13 @@ export default function Film({ film, onClick, onHistoryChange, reason }) {
         <h2 className="film-card__title">{film.Series_Title}</h2>
         <p className="film-card__genre">{film.Genre}</p>
         <p className="film-card__rating">{film.IMDB_Rating}</p>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          {film.Certificate && film.Certificate !== "N/A" && (
+            <span className="film-card__certificate">
+              {convertRating(film.Certificate)}
+            </span>
+          )}
+        </div>
         <p className="film-card__meta">
           {film.Released_Year} · {film.Runtime}
         </p>
@@ -96,13 +117,13 @@ export default function Film({ film, onClick, onHistoryChange, reason }) {
           className={currentAction.planned ? "active" : ""}
           onClick={(e) => {
             e.stopPropagation();
-            updateAction("watchlist");
+            updateAction("planned");
           }}
         >
           Watch later
         </button>
         <button
-        className={currentAction.watched ? "active" : ""}
+          className={currentAction.watched ? "active" : ""}
           onClick={(e) => {
             e.stopPropagation();
             updateAction("watched");
@@ -111,7 +132,7 @@ export default function Film({ film, onClick, onHistoryChange, reason }) {
           Watched
         </button>
         <button
-        className={currentAction.liked ? "active" : ""}
+          className={currentAction.liked ? "active" : ""}
           onClick={(e) => {
             e.stopPropagation();
             updateAction("liked");
@@ -120,7 +141,7 @@ export default function Film({ film, onClick, onHistoryChange, reason }) {
           Like
         </button>
         <button
-        className={currentAction.disliked ? "active" : ""}
+          className={currentAction.disliked ? "active" : ""}
           onClick={(e) => {
             e.stopPropagation();
             updateAction("disliked");
@@ -131,7 +152,7 @@ export default function Film({ film, onClick, onHistoryChange, reason }) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-           navigate(`/film/${film.id}`)
+            navigate(`/film/${film.id}`);
           }}
         >
           ▶ Trailer

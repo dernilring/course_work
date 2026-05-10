@@ -23,15 +23,11 @@ async function ensureEmbedding(tmdbId) {
 async function getRecommendations(req, res) {
   try {
     const tmdbId = req.params.id;
-    console.log("1. tmdbId:", tmdbId);
     if (!tmdbId) return res.status(400).json({ error: "Invalid movie id" });
 
     await ensureEmbedding(tmdbId);
-    console.log("2. после ensureEmbedding");
-    // if fewer than 50 embeddings in DB, we can't give good recommendations.
-    // the /api/recommendations/seed endpoint should be called first.
     const recommendations = await getSemanticRecommendations(tmdbId, 10);
-    console.log("3. recommendations:", recommendations.length);
+    console.log("recommendations:", recommendations.length);
 
     res.json(recommendations);
   } catch (err) {

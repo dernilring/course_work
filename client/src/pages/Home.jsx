@@ -2,20 +2,24 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import Film from "../Film.jsx";
 import "./Home.css";
 import { fetchRecommendations } from "../api/recommendations.js";
-import { getHistory } from "../utils/storage.js";
+import { getActions, getHistory, saveActions } from "../utils/storage.js";
 import { useFilms } from "../context/FilmContext.jsx";
 import Filters from "./Filters.jsx";
 
 export default function Home() {
-  const [selectedFilm, setSelectedFilm] = useState(null);
-  const [recommendations, setRecommendations] = useState([]);
-  const { films, addFilms, resetFilms } = useFilms(); 
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  //const [selectedFilm, setSelectedFilm] = useState(null);
+  //const [recommendations, setRecommendations] = useState([]);
+  const { films, addFilms, resetFilms, page, setPage, hasMore, setHasMore , selectedFilm, setSelectedFilm, recommendations, setRecommendations, filmHistory, setFilmHistory
+} =
+    useFilms();
+  // const [page, setPage] = useState(1);
+  // const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const loaderRef = useRef(null);
   const [history, setHistory] = useState(getHistory());
   const topRef = useRef(null);
+  const [actions, setActions] = useState(getActions);
+  //const [filmHistory, setFilmHistory] = useState([]);
 
   const [filters, setFilters] = useState({
     genre: "",
@@ -24,26 +28,26 @@ export default function Home() {
     search: "",
   });
 
-
   const sortRef = useRef(filters.sort);
 
-const fetchFilms = async (pageNum, sort) => {
-  const currentSort = sort ?? sortRef.current;
-  setLoading(true);
-  const url = `/films?page=${pageNum}&limit=20&sort=${currentSort}`;
-  const res = await fetch(url);
-  const data = await res.json();
+  const fetchFilms = async (pageNum, sort) => {
+    const currentSort = sort ?? sortRef.current;
+    setLoading(true);
+    const url = `/films?page=${pageNum}&limit=20&sort=${currentSort}`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-  
-  const movies = Array.isArray(data) ? data : (data.movies || []);
-  const hasMoreFromServer = Array.isArray(data) ? movies.length >= 20 : data.hasMore;
+    const movies = Array.isArray(data) ? data : data.movies || [];
+    const hasMoreFromServer = Array.isArray(data)
+      ? movies.length >= 20
+      : data.hasMore;
 
-  console.log("Загружено фильмов:", movies.length);
+    console.log("Загружено фильмов:", movies.length);
 
-  if (!hasMoreFromServer) setHasMore(false);
-  addFilms(movies);
-  setLoading(false);
-};
+    if (!hasMoreFromServer) setHasMore(false);
+    addFilms(movies);
+    setLoading(false);
+  };
 
   useEffect(() => {
     fetchFilms(1);
@@ -69,9 +73,8 @@ const fetchFilms = async (pageNum, sort) => {
   const handleFiltersChange = (newFilters) => {
     const sortChanged = newFilters.sort !== filters.sort;
     setFilters(newFilters);
-    sortRef.current = newFilters.sort; 
+    sortRef.current = newFilters.sort;
 
-   
     if (sortChanged) {
       resetFilms();
       setPage(1);
@@ -81,6 +84,9 @@ const fetchFilms = async (pageNum, sort) => {
   };
 
   const handleFilmClick = async (film) => {
+    if (selectedFilm) {
+      setFilmHistory((prev) => [...prev, selectedFilm]);
+    }
     setSelectedFilm(film);
     setRecommendations([]);
     topRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -89,6 +95,15 @@ const fetchFilms = async (pageNum, sort) => {
     setRecommendations(recs);
   };
 
+  const handleBack = () => {
+    if (filmHistory.length === 0) return;
+    const prev = filmHistory[filmHistory.length - 1];
+    setFilmHistory((h) => h.slice(0, -1));
+    setSelectedFilm(prev);
+
+    fetchRecommendations(prev.id).then(setRecommendations);
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
   const refreshHistory = () => setHistory(getHistory());
 
   const filteredFilms = useMemo(() => {
@@ -134,6 +149,23 @@ const fetchFilms = async (pageNum, sort) => {
     return result;
   }, [films, filters]);
 
+  const handleAction = (filmId, action) => {
+    const allActions = getActions();
+    const prev = allActions[filmId] || {};
+    const updated = {
+      ...prev,
+      [action]: !prev[action],
+    };
+    if (action === "liked") updated.disliked = false;
+    if (action === "disliked") updated.liked = false;
+    if (action === "watched") updated.planned = false;
+    if (action === "planned") updated.watched = false;
+
+    allActions[filmId] = updated;
+    saveActions({ ...allActions });
+    setActions({ ...allActions });
+  };
+
   return (
     <div className="page">
       <div ref={topRef} />
@@ -144,16 +176,35 @@ const fetchFilms = async (pageNum, sort) => {
       <div className="films-grid">
         {selectedFilm && (
           <div className="recommended">
+            {filmHistory.length > 0 && (
+              <button onClick={handleBack} className="prev-button">
+                ← Back to {filmHistory[filmHistory.length - 1]?.Series_Title}
+              </button>
+            )}
             <h2>Similar to {selectedFilm.Series_Title}</h2>
-            {recommendations.map((film) => (
-              <Film
-                key={`rec-${film.id}`}
-                film={film}
-                onClick={handleFilmClick}
-                onHistoryChange={refreshHistory}
-                reason={film.reason}
-              />
-            ))}
+            <button
+              onClick={() => {
+                setSelectedFilm(null);
+                setRecommendations([]);
+                setFilmHistory([]);
+              }}
+              className="reset-button"
+            >
+              Reset recommendations
+            </button>
+            <div className="recommended-grid">
+              {recommendations.map((film) => (
+                <Film
+                  key={`rec-${film.id}`}
+                  film={film}
+                  onClick={handleFilmClick}
+                  onHistoryChange={refreshHistory}
+                  actions={actions}
+                  onAction={handleAction}
+                  reason={film.reason}
+                />
+              ))}
+            </div>
           </div>
         )}
 
@@ -162,7 +213,13 @@ const fetchFilms = async (pageNum, sort) => {
         )}
 
         {filteredFilms.map((film) => (
-          <Film key={`main-${film.id}`} film={film} onClick={handleFilmClick} />
+          <Film
+            key={`main-${film.id}`}
+            film={film}
+            onClick={handleFilmClick}
+            actions={actions}
+            onAction={handleAction}
+          />
         ))}
       </div>
 

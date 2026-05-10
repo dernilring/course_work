@@ -1,55 +1,66 @@
-import React, { useState } from "react";
-import { useFilms } from "../context/FilmContext";
+import React, { useState, useEffect } from "react";
 import { getActions, saveActions } from "../utils/storage";
 import SelectedFilm from "./SelectedFilm";
 import { useNavigate } from "react-router-dom";
 import "./Pages.css";
 
-export default function WatchLater() {
-  const { films } = useFilms();
-  const [actions, setLocalActions] = useState(getActions());
+export default function WatchList() {
+  const [watchListFilms, setWatchListFilms] = useState([]);
   const navigate = useNavigate();
-  const watchlistFilms = films.filter((film) => actions[film.id]?.watchlist);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/films/actions/all")
+      .then(res => res.json())
+      .then(allActions => {
+        const watchListIds = allActions
+          .filter(a => a.action === "watchlist")
+          .map(a => a.tmdb_id);
+
+        return Promise.all(
+          watchListIds.map(id =>
+            fetch(`http://localhost:5000/films/${id}`)
+              .then(r => r.json())
+              .catch(() => null)
+          )
+        );
+      })
+      .then(films => setWatchListFilms(films.filter(Boolean)))
+      .catch(console.warn);
+  }, []);
 
   const clearAll = () => {
-    const allActions = getActions();
-    Object.keys(allActions).forEach((id) => {
-      if (allActions[id].watchlist) allActions[id].watchlist = false;
-    });
-    saveActions(allActions);
-    setLocalActions({ ...allActions });
-
-    watchlistFilms.forEach((film) => {
+    watchListFilms.forEach((film) => {
       fetch(`http://localhost:5000/films/${film.id}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "watchlist", active: false }),
       }).catch(console.warn);
     });
+    setwatchListFilms([]);
   };
 
   return (
     <div className="page-container">
       <div className="page-header">
         <div className="page-left-group">
-          <button className="page-back-button" onClick={() => navigate("/")}>
+          <button className="page-back-button" onClick={() => navigate(-1)}>
             ← Back
           </button>
-          <h2 className="page-title">Watch later : ({watchlistFilms.length})</h2>
+          <h2 className="page-title">WatchList ({watchListFilms.length})</h2>
         </div>
-        {watchlistFilms.length > 0 && (
+        {watchListFilms.length > 0 && (
           <button onClick={clearAll} className="page-clear-button">
             Clear all
           </button>
         )}
       </div>
 
-      {watchlistFilms.length === 0 && (
-        <p className="page-empty-message">no watch later films</p>
+      {watchListFilms.length === 0 && (
+        <p className="page-empty-message">No watchList films</p>
       )}
 
       <div className="page-films-grid">
-        {watchlistFilms.map((film) => (
+        {watchListFilms.map((film) => (
           <SelectedFilm key={film.id} film={film} />
         ))}
       </div>

@@ -1,25 +1,34 @@
-import React, { useState } from "react";
-import { useFilms } from "../context/FilmContext";
+import React, { useState, useEffect } from "react";
 import { getActions, saveActions } from "../utils/storage";
 import SelectedFilm from "./SelectedFilm";
 import { useNavigate } from "react-router-dom";
-import "./Pages.css"; 
+import "./Pages.css";
 
 export default function Disliked() {
-  const { films } = useFilms();
-  const [actions, setLocalActions] = useState(getActions());
+  const [dislikedFilms, setDislikedFilms] = useState([]);
   const navigate = useNavigate();
 
-  const dislikedFilms = films.filter((film) => actions[film.id]?.disliked);
+  useEffect(() => {
+    fetch("http://localhost:5000/films/actions/all")
+      .then(res => res.json())
+      .then(allActions => {
+        const dislikedIds = allActions
+          .filter(a => a.action === "dislike")
+          .map(a => a.tmdb_id);
+
+        return Promise.all(
+          dislikedIds.map(id =>
+            fetch(`http://localhost:5000/films/${id}`)
+              .then(r => r.json())
+              .catch(() => null)
+          )
+        );
+      })
+      .then(films => setDislikedFilms(films.filter(Boolean)))
+      .catch(console.warn);
+  }, []);
 
   const clearAll = () => {
-    const allActions = getActions();
-    Object.keys(allActions).forEach((id) => {
-      if (allActions[id].disliked) allActions[id].disliked = false;
-    });
-    saveActions(allActions);
-    setLocalActions({ ...allActions });
-
     dislikedFilms.forEach((film) => {
       fetch(`http://localhost:5000/films/${film.id}/action`, {
         method: "POST",
@@ -27,18 +36,17 @@ export default function Disliked() {
         body: JSON.stringify({ action: "dislike", active: false }),
       }).catch(console.warn);
     });
+    setDislikedFilms([]);
   };
 
   return (
     <div className="page-container">
       <div className="page-header">
         <div className="page-left-group">
-          <button className="page-back-button" onClick={() => navigate('/')}>
+          <button className="page-back-button" onClick={() => navigate(-1)}>
             ← Back
           </button>
-          <h2 className="page-title">
-            Disliked ({dislikedFilms.length})
-          </h2>
+          <h2 className="page-title">Disliked ({dislikedFilms.length})</h2>
         </div>
         {dislikedFilms.length > 0 && (
           <button onClick={clearAll} className="page-clear-button">

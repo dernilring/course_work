@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./FilmDetailed.css";
 import { useFilms } from "../context/FilmContext";
-
 export default function FilmDetailed() {
   const { id } = useParams();
   const { films } = useFilms();

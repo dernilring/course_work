@@ -18,6 +18,7 @@ db.exec(`
     rating      REAL,
     year        TEXT,
     poster      TEXT,
+    certificate TEXT,
     cached_at   INTEGER DEFAULT (strftime('%s','now'))
   );
 
@@ -35,8 +36,8 @@ db.exec(`
 function saveEmbedding(movie, embedding) {
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO movie_embeddings
-      (tmdb_id, title, embedding, overview, genre, rating, year, poster)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      (tmdb_id, title, embedding, overview, genre, rating, year, poster, certificate)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
   stmt.run(
     movie.id,
@@ -46,7 +47,8 @@ function saveEmbedding(movie, embedding) {
     movie.Genre,
     parseFloat(movie.IMDB_Rating) || null,
     movie.Released_Year,
-    movie.Poster_Link
+    movie.Poster_Link,
+    movie.Certificate || null
   )
 }
 

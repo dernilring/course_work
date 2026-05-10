@@ -45,8 +45,7 @@ async function searchTopResult(query) {
 }
 
 async function getTopMovies(page = 1, reverseChunk = false) {
-  const TOP_IMDB_IDS = [
-"tt0137523",
+  const TOP_IMDB_IDS = [... new Set(["tt0137523",
 "tt0021749",
 "tt0110357",
 "tt0076759",
@@ -177,6 +176,8 @@ async function getTopMovies(page = 1, reverseChunk = false) {
 "tt0482571",
 "tt0361748",
 "tt0338013"
+])
+
   ];
   const perPage = 20;
   const start = (page - 1) * perPage;
