@@ -47,6 +47,9 @@ export default function WatchList() {
           <button className="page-back-button" onClick={() => navigate(-1)}>
             ← Back
           </button>
+           <button className="page-back-button" onClick={() => navigate("/")}>
+            ← Home
+          </button>
           <h2 className="page-title">WatchList ({watchListFilms.length})</h2>
         </div>
         {watchListFilms.length > 0 && (

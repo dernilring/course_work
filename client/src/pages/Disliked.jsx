@@ -47,6 +47,9 @@ export default function Disliked() {
           <button className="page-back-button" onClick={() => navigate(-1)}>
             ← Back
           </button>
+          <button className="page-back-button" onClick={() => navigate("/")}>
+            ← Home
+          </button>
           <h2 className="page-title">Disliked ({dislikedFilms.length})</h2>
         </div>
         {dislikedFilms.length > 0 && (

@@ -47,6 +47,9 @@ export default function Watched() {
           <button className="page-back-button" onClick={() => navigate(-1)}>
             ← Back
           </button>
+           <button className="page-back-button" onClick={() => navigate("/")}>
+            ← Home
+          </button>
           <h2 className="page-title">Watched ({watchedFilms.length})</h2>
         </div>
         {watchedFilms.length > 0 && (
