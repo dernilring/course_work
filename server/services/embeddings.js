@@ -39,7 +39,6 @@ function averageVectors(vectors) {
   for (const v of vectors) {
     for (let i = 0; i < dim; i++) avg[i] += v[i]
   }
-
   const norm = Math.sqrt(avg.reduce((s, x) => s + x * x, 0))
   return avg.map(x => x / (norm || 1))
 }

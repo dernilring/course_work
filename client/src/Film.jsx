@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./film.css";
+import "./Film.css";
 import {
   getActions,
   saveActions,

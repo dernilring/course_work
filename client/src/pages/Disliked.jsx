@@ -10,7 +10,7 @@ export default function Disliked() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:5000/films/actions/all")
+    fetch(`${API_URL}/films/actions/all`)
       .then(res => res.json())
       .then(allActions => {
         const dislikedIds = allActions
@@ -19,7 +19,7 @@ export default function Disliked() {
 
         return Promise.all(
           dislikedIds.map(id =>
-            fetch(`http://localhost:5000/films/${id}`)
+            fetch(`${API_URL}/films/${id}`)
               .then(r => r.json())
               .catch(() => null)
           )
@@ -31,7 +31,7 @@ export default function Disliked() {
 
   const clearAll = () => {
     dislikedFilms.forEach((film) => {
-      fetch(`http://localhost:5000/films/${film.id}/action`, {
+      fetch(`${API_URL}/films/${film.id}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "dislike", active: false }),
