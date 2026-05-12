@@ -5,6 +5,7 @@ import { fetchRecommendations } from "../api/recommendations.js";
 import { getActions, getHistory, saveActions } from "../utils/storage.js";
 import { useFilms } from "../context/FilmContext.jsx";
 import Filters from "./Filters.jsx";
+import API_URL from '../api/config'
 
 export default function Home() {
   //const [selectedFilm, setSelectedFilm] = useState(null);
@@ -33,7 +34,7 @@ export default function Home() {
   const fetchFilms = async (pageNum, sort) => {
     const currentSort = sort ?? sortRef.current;
     setLoading(true);
-    const url = `/films?page=${pageNum}&limit=20&sort=${currentSort}`;
+    const url = `${API_URL}/films?page=${pageNum}&limit=20&sort=${currentSort}`;
     const res = await fetch(url);
     const data = await res.json();
 
