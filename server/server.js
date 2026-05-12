@@ -9,7 +9,12 @@ if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir)
 
 const app = express()
 
-app.use(cors({ origin: 'http://localhost:5173' }))
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://glowing-concha-6db759.netlify.app'
+  ]
+}))
 app.use(express.json())
 
 const filmsRouter = require('./routes/films')
