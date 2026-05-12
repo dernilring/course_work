@@ -3,13 +3,14 @@ import { getActions, saveActions } from "../utils/storage";
 import SelectedFilm from "./SelectedFilm";
 import { useNavigate } from "react-router-dom";
 import "./Pages.css";
+import API_URL from '../api/config'
 
 export default function Watched() {
   const [watchedFilms, setWatchedFilms] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:5000/films/actions/all")
+    fetch(`${API_URL}/films/actions/all`)
       .then(res => res.json())
       .then(allActions => {
         const watchedIds = allActions
@@ -18,7 +19,7 @@ export default function Watched() {
 
         return Promise.all(
           watchedIds.map(id =>
-            fetch(`http://localhost:5000/films/${id}`)
+            fetch(`${API_URL}/films/${id}`)
               .then(r => r.json())
               .catch(() => null)
           )
@@ -30,7 +31,7 @@ export default function Watched() {
 
   const clearAll = () => {
     watchedFilms.forEach((film) => {
-      fetch(`http://localhost:5000/films/${film.id}/action`, {
+      fetch(`${API_URL}/films/${film.id}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "watched", active: false }),

@@ -3,6 +3,7 @@ import { getActions, saveActions } from "../utils/storage";
 import SelectedFilm from "./SelectedFilm";
 import { useNavigate } from "react-router-dom";
 import "./Pages.css";
+import API_URL from '../api/config'
 
 export default function Disliked() {
   const [dislikedFilms, setDislikedFilms] = useState([]);

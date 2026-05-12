@@ -7,6 +7,7 @@ import {
   saveHistory,
 } from "./utils/storage.js";
 import { useNavigate } from "react-router-dom";
+import API_URL from '../src/api/config.js'
 
 export default function Film({
   film,
@@ -31,7 +32,7 @@ export default function Film({
       planned: "watchlist",
     };
     try {
-      await fetch(`http://localhost:5000/films/${film.id}/action`, {
+      await fetch(`${API_URL}/films/${film.id}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

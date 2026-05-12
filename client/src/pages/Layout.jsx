@@ -16,7 +16,7 @@ export default function Layout() {
           Disliked
         </NavLink>
         <NavLink to="/watchedLater" className={handleActive}>
-          Watch Later
+          Watch later
         </NavLink>
         <NavLink to="/watched" className={handleActive}>
           Watched

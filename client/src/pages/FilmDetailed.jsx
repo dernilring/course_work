@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./FilmDetailed.css";
 import { useFilms } from "../context/FilmContext";
+import API_URL from '../api/config'
 export default function FilmDetailed() {
   const { id } = useParams();
   const { films } = useFilms();
@@ -16,7 +17,7 @@ export default function FilmDetailed() {
       if (cached) {
         setFilm(cached);
         const trailerRes = await fetch(
-          `http://localhost:5000/films/${id}/trailer`,
+          `${API_URL}/films/${id}/trailer`,
         );
         const trailerData = await trailerRes.json();
         setVideoId(trailerData.videoId);
@@ -24,8 +25,8 @@ export default function FilmDetailed() {
         return;
       }
       const [filmRes, trailerRes] = await Promise.all([
-        fetch(`http://localhost:5000/films/${id}`),
-        fetch(`http://localhost:5000/films/${id}/trailer`),
+        fetch(`${API_URL}/films/${id}`),
+        fetch(`${API_URL}/films/${id}/trailer`),
       ]);
 
       const filmData = await filmRes.json();
